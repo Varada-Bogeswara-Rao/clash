@@ -421,19 +421,19 @@ export default function CwlPage() {
 
   return (
     <div className="space-y-10">
-      <section className="section-frame space-y-5 px-6 py-8 md:px-8 md:py-10">
+      <section className="section-frame space-y-5 px-4 py-7 sm:px-6 md:px-8 md:py-10">
         <p className="eyebrow">CWL Utility</p>
-        <h1 className="font-serif-display text-5xl leading-[0.94] tracking-tight text-ink md:text-7xl">
+        <h1 className="font-serif-display text-4xl leading-[0.98] tracking-tight text-ink sm:text-5xl md:text-7xl">
           CWL Log Parser
         </h1>
-        <p className="max-w-3xl text-lg leading-8 text-ink/66">
+        <p className="max-w-3xl text-base leading-7 text-ink/66 sm:text-lg sm:leading-8">
           Paste raw Discord output for one or many players, parse it, and save structured monthly logs.
         </p>
       </section>
 
       {isUnlocked ? (
         <>
-          <section className="section-frame space-y-5 px-6 py-6 md:px-8 md:py-8">
+          <section className="section-frame space-y-5 px-4 py-6 sm:px-6 md:px-8 md:py-8">
         <p className="data-label">Raw CWL Text</p>
         <textarea
           value={rawInput}
@@ -512,7 +512,7 @@ export default function CwlPage() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="section-frame space-y-6 px-6 py-6 md:px-8 md:py-8"
+            className="section-frame space-y-6 px-4 py-6 sm:px-6 md:px-8 md:py-8"
           >
             <div className="space-y-2">
               <p className="eyebrow">Parsed Output</p>
@@ -533,8 +533,8 @@ export default function CwlPage() {
                     </p>
                   </div>
 
-                  <div className="overflow-x-auto rounded-2xl border border-black/10">
-                    <table className="min-w-full border-collapse text-left text-sm">
+                  <div className="-mx-1 overflow-x-auto rounded-2xl border border-black/10">
+                    <table className="min-w-[900px] border-collapse text-left text-sm md:min-w-full">
                       <thead className="border-b border-black/10 bg-paper">
                         <tr className="text-xs uppercase tracking-[0.22em] text-ink/55">
                           <th className="px-4 py-3 font-normal">Month</th>
@@ -598,7 +598,7 @@ export default function CwlPage() {
       </AnimatePresence>
         </>
       ) : (
-        <section className="section-frame space-y-4 px-6 py-6 md:px-8 md:py-8">
+        <section className="section-frame space-y-4 px-4 py-6 sm:px-6 md:px-8 md:py-8">
           <p className="data-label">Parser Locked</p>
           <p className="text-sm leading-7 text-ink/66">
             Enter the password to unlock the CWL parser section.
@@ -640,6 +640,7 @@ export default function CwlPage() {
     </div>
   );
 }
+
 
 
 

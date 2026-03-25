@@ -148,7 +148,7 @@ export function WarsLedgerClient({ wars, attacksByWar }: WarsLedgerClientProps) 
 
   return (
     <div className="space-y-7">
-      <section className="section-frame flex flex-wrap items-center justify-between gap-4 px-6 py-5 md:px-8">
+      <section className="section-frame flex flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 md:px-8">
         <div>
           <p className="data-label">Action Strip</p>
           <p className="mt-2 text-sm text-ink/62">
@@ -159,7 +159,7 @@ export function WarsLedgerClient({ wars, attacksByWar }: WarsLedgerClientProps) 
           type="button"
           onClick={handleArchiveLatestWar}
           disabled={isArchiving}
-          className="rounded-full border border-black/15 bg-ink px-5 py-2 text-xs uppercase tracking-[0.2em] text-paper transition-colors hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-full border border-black/15 bg-ink px-5 py-2 text-xs uppercase tracking-[0.2em] text-paper transition-colors hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
           {isArchiving ? "Archiving..." : "Archive Latest Ended War"}
         </button>
@@ -185,7 +185,7 @@ export function WarsLedgerClient({ wars, attacksByWar }: WarsLedgerClientProps) 
       </AnimatePresence>
 
       {wars.length === 0 ? (
-        <section className="section-frame px-6 py-10 text-center text-ink/60">
+        <section className="section-frame px-4 py-10 text-center text-ink/60 sm:px-6">
           <p className="font-serif-display text-3xl text-ink">No archived wars yet</p>
           <p className="mt-3 text-base">
             Archive a finished war to begin your permanent war timeline.
@@ -207,7 +207,7 @@ export function WarsLedgerClient({ wars, attacksByWar }: WarsLedgerClientProps) 
                       [war.id]: !current[war.id]
                     }))
                   }
-                  className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left md:px-8"
+                  className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left sm:px-6 md:px-8"
                 >
                   <div className="space-y-2">
                     <h3 className="font-serif-display text-3xl tracking-tight text-ink">
@@ -238,8 +238,8 @@ export function WarsLedgerClient({ wars, attacksByWar }: WarsLedgerClientProps) 
                       exit="collapsed"
                       className="overflow-hidden border-t border-black/10"
                     >
-                      <div className="overflow-x-auto px-4 py-4 md:px-6 md:py-5">
-                        <table className="min-w-full border-collapse text-left text-sm">
+                      <div className="-mx-1 overflow-x-auto px-3 py-4 sm:px-4 md:px-6 md:py-5">
+                        <table className="min-w-[760px] border-collapse text-left text-sm md:min-w-full">
                           <thead className="border-b border-black/10 text-xs uppercase tracking-[0.2em] text-ink/55">
                             <tr>
                               <th className="px-3 py-3 font-normal">Attacker</th>
@@ -292,5 +292,6 @@ export function WarsLedgerClient({ wars, attacksByWar }: WarsLedgerClientProps) 
     </div>
   );
 }
+
 
 

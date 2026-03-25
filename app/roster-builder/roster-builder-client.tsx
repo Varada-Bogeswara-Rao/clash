@@ -323,9 +323,9 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
 
   return (
     <div className="space-y-8">
-      <section className="section-frame space-y-5 px-6 py-6 md:px-8">
+      <section className="section-frame space-y-5 px-4 py-6 sm:px-6 md:px-8">
         <p className="data-label">Clan Config</p>
-        <div className="grid gap-3 md:grid-cols-[minmax(220px,1fr)_140px_190px_auto]">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(220px,1fr)_140px_190px_auto]">
           <input
             value={clanTagInput}
             onChange={(event) => setClanTagInput(event.target.value)}
@@ -357,7 +357,7 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
             type="button"
             onClick={handleFetchClan}
             disabled={isFetchingClan}
-            className="rounded-full border border-black/15 bg-ink px-5 py-2 text-xs uppercase tracking-[0.22em] text-paper transition-colors hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-full border border-black/15 bg-ink px-5 py-2 text-xs uppercase tracking-[0.22em] text-paper transition-colors hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-50 md:w-auto"
           >
             {isFetchingClan ? "Fetching..." : "Fetch Clan"}
           </button>
@@ -379,7 +379,7 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
       </AnimatePresence>
 
       <section className="grid gap-6 lg:grid-cols-[minmax(280px,0.85fr)_minmax(0,1.45fr)]">
-        <article className="section-frame h-[70vh] overflow-hidden px-5 py-5">
+        <article className="section-frame min-h-[420px] overflow-hidden px-4 py-4 sm:px-5 sm:py-5 lg:h-[70vh]">
           <div className="flex h-full flex-col gap-4">
             <div className="space-y-3">
               <p className="data-label">Player Bank</p>
@@ -402,7 +402,7 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
               </select>
             </div>
 
-            <div className="h-full overflow-y-auto pr-1">
+            <div className="h-full max-h-[58vh] overflow-y-auto pr-1 lg:max-h-none">
               <div className="space-y-2">
                 {filteredPlayers.map((player) => {
                   const draftedIn = playerRosterLookup(player.player_tag);
@@ -522,7 +522,7 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
 
         <article className="space-y-4">
           {rosters.length === 0 ? (
-            <div className="section-frame px-6 py-10 text-center text-ink/60">
+            <div className="section-frame px-4 py-10 text-center text-ink/60 sm:px-6">
               <p className="font-serif-display text-3xl text-ink">No rosters yet</p>
               <p className="mt-3 text-base">
                 Fetch a clan above to create your first roster board.
@@ -531,7 +531,7 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
           ) : (
             rosters.map((roster) => (
               <section key={roster.id} className="section-frame overflow-hidden">
-                <div className="border-b border-black/10 px-6 py-5">
+                <div className="border-b border-black/10 px-4 py-4 sm:px-6 sm:py-5">
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                       {roster.badgeUrl ? (
@@ -627,7 +627,7 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
                   </AnimatePresence>
                 </div>
 
-                <div className="border-t border-black/10 px-6 py-4">
+                <div className="border-t border-black/10 px-4 py-4 sm:px-6">
                   <p className="text-xs uppercase tracking-[0.16em] text-ink/58">
                     {compositionText(roster.assignedPlayers)}
                   </p>
@@ -640,3 +640,4 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
     </div>
   );
 }
+

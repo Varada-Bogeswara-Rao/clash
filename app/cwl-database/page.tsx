@@ -54,12 +54,12 @@ export default async function CwlDatabasePage() {
 
   return (
     <div className="space-y-10">
-      <section className="section-frame space-y-5 px-6 py-8 md:px-8 md:py-10">
+      <section className="section-frame space-y-5 px-4 py-7 sm:px-6 md:px-8 md:py-10">
         <p className="eyebrow">CWL Directory</p>
-        <h1 className="font-serif-display text-5xl leading-[0.94] tracking-tight text-ink md:text-7xl">
+        <h1 className="font-serif-display text-4xl leading-[0.98] tracking-tight text-ink sm:text-5xl md:text-7xl">
           CWL Player Database
         </h1>
-        <p className="max-w-3xl text-lg leading-8 text-ink/66">
+        <p className="max-w-3xl text-base leading-7 text-ink/66 sm:text-lg sm:leading-8">
           Master roster view grouped by player, with latest league filtering and
           expandable monthly timelines.
         </p>
@@ -71,7 +71,7 @@ export default async function CwlDatabasePage() {
       </section>
 
       {errorMessage ? (
-        <section className="section-frame border-brick/20 px-6 py-6 text-brick">
+        <section className="section-frame border-brick/20 px-4 py-6 text-brick sm:px-6">
           <p className="data-label text-brick/80">Data Source Error</p>
           <p className="mt-3 text-base leading-7">{errorMessage}</p>
           <p className="mt-3 text-sm leading-6 text-brick/85">
@@ -84,3 +84,4 @@ export default async function CwlDatabasePage() {
     </div>
   );
 }
+

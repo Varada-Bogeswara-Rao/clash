@@ -96,7 +96,7 @@ export default async function PlayerProfilePage({
 
   return (
     <div className="space-y-10">
-      <section className="section-frame space-y-6 px-6 py-8 md:px-8 md:py-10">
+      <section className="section-frame space-y-6 px-4 py-7 sm:px-6 md:px-8 md:py-10">
         <Link
           href="/player-ledger"
           className="inline-flex items-center gap-2 rounded-full border border-black/10 px-4 py-2 text-xs uppercase tracking-[0.22em] text-ink/70 hover:bg-paper"
@@ -106,7 +106,7 @@ export default async function PlayerProfilePage({
 
         <div className="space-y-3">
           <p className="eyebrow">Player Profile</p>
-          <h1 className="font-serif-display text-5xl leading-[0.94] tracking-tight text-ink md:text-7xl">
+          <h1 className="font-serif-display text-4xl leading-[0.98] tracking-tight text-ink sm:text-5xl md:text-7xl">
             {player?.name ?? "Unknown Player"}
           </h1>
           <p className="text-sm uppercase tracking-[0.22em] text-ink/55">{playerTag}</p>
@@ -122,7 +122,7 @@ export default async function PlayerProfilePage({
         </div>
 
         {history.length === 0 ? (
-          <div className="section-frame px-6 py-12 text-center text-ink/60">
+          <div className="section-frame px-4 py-10 text-center text-ink/60 sm:px-6 sm:py-12">
             <p className="font-serif-display text-3xl text-ink">No recent history</p>
             <p className="mt-3 text-base">
               This player has no snapshots in the retained 30-day window.
@@ -130,14 +130,14 @@ export default async function PlayerProfilePage({
           </div>
         ) : (
           <div className="section-frame overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full border-collapse text-left text-sm">
+            <div className="-mx-1 overflow-x-auto">
+              <table className="min-w-[700px] border-collapse text-left text-sm md:min-w-full">
                 <thead className="border-b border-black/10 bg-paper">
                   <tr className="text-xs uppercase tracking-[0.22em] text-ink/55">
-                    <th className="px-5 py-4 font-normal">Date</th>
-                    <th className="px-5 py-4 font-normal">Clan Name</th>
-                    <th className="px-5 py-4 font-normal">Clan Tag</th>
-                    <th className="px-5 py-4 font-normal">In Home Clan?</th>
+                    <th className="px-3 py-3 font-normal sm:px-5 sm:py-4">Date</th>
+                    <th className="px-3 py-3 font-normal sm:px-5 sm:py-4">Clan Name</th>
+                    <th className="px-3 py-3 font-normal sm:px-5 sm:py-4">Clan Tag</th>
+                    <th className="px-3 py-3 font-normal sm:px-5 sm:py-4">In Home Clan?</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -151,10 +151,10 @@ export default async function PlayerProfilePage({
                         key={row.id}
                         className="border-b border-black/10 last:border-b-0 hover:bg-paper"
                       >
-                        <td className="whitespace-nowrap px-5 py-4 text-ink/70">
+                        <td className="whitespace-nowrap px-3 py-3 text-ink/70 sm:px-5 sm:py-4">
                           {dateFormatter.format(new Date(`${row.date}T00:00:00`))}
                         </td>
-                        <td className="px-5 py-4 text-base text-ink">
+                        <td className="px-3 py-3 text-base text-ink sm:px-5 sm:py-4">
                           {row.clan_name ? (
                             row.clan_name
                           ) : (
@@ -163,10 +163,10 @@ export default async function PlayerProfilePage({
                             </span>
                           )}
                         </td>
-                        <td className="px-5 py-4 uppercase tracking-[0.16em] text-ink/60">
+                        <td className="px-3 py-3 uppercase tracking-[0.16em] text-ink/60 sm:px-5 sm:py-4">
                           {row.clan_tag ?? "-"}
                         </td>
-                        <td className="px-5 py-4">
+                        <td className="px-3 py-3 sm:px-5 sm:py-4">
                           <span
                             className={[
                               "inline-flex rounded-full border px-3 py-1 text-xs uppercase tracking-[0.22em]",
@@ -190,3 +190,4 @@ export default async function PlayerProfilePage({
     </div>
   );
 }
+

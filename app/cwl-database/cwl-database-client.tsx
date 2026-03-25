@@ -134,10 +134,10 @@ export function CwlDatabaseClient({
 
   return (
     <div className="space-y-8">
-      <section className="section-frame space-y-5 px-6 py-6 md:px-8">
+      <section className="section-frame space-y-5 px-4 py-6 sm:px-6 md:px-8">
         <p className="data-label">Latest League Filter</p>
         <div className="overflow-x-auto pb-1">
-          <div className="inline-flex min-w-full gap-2">
+          <div className="inline-flex min-w-max gap-2 pr-1">
             {filterOptions.map((league) => {
               const isActive = selectedLeague === league;
 
@@ -167,7 +167,7 @@ export function CwlDatabaseClient({
       </section>
 
       {filteredPlayers.length === 0 ? (
-        <section className="section-frame px-6 py-10 text-center text-ink/60">
+        <section className="section-frame px-4 py-10 text-center text-ink/60 sm:px-6">
           <p className="font-serif-display text-3xl text-ink">No players found</p>
           <p className="mt-3 text-base">
             No CWL players match the selected latest league filter.
@@ -197,7 +197,7 @@ export function CwlDatabaseClient({
                         [player.player_tag]: !current[player.player_tag]
                       }))
                     }
-                    className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left md:px-8"
+                    className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left sm:px-6 md:px-8"
                   >
                     <div className="space-y-2">
                       <h3 className="font-serif-display text-3xl tracking-tight text-ink">
@@ -230,8 +230,8 @@ export function CwlDatabaseClient({
                         exit="collapsed"
                         className="overflow-hidden border-t border-black/10"
                       >
-                        <div className="overflow-x-auto px-4 py-4 md:px-6 md:py-5">
-                          <table className="min-w-full border-collapse text-left text-sm">
+                        <div className="-mx-1 overflow-x-auto px-3 py-4 sm:px-4 md:px-6 md:py-5">
+                          <table className="min-w-[860px] border-collapse text-left text-sm md:min-w-full">
                             <thead className="border-b border-black/10 text-xs uppercase tracking-[0.2em] text-ink/55">
                               <tr>
                                 <th className="px-3 py-3 font-normal">Month</th>
@@ -297,3 +297,4 @@ export function CwlDatabaseClient({
     </div>
   );
 }
+

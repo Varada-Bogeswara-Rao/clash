@@ -53,7 +53,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-paper text-ink">
       <header className="border-b border-black/10 bg-paper/95 backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-6 py-5 md:flex-row md:items-center md:justify-between">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-4 sm:px-6 sm:py-5 md:flex-row md:items-center md:justify-between">
           <div className="space-y-2">
             <p className="eyebrow">Automated Clash of Clans tracking</p>
             <Link
@@ -104,7 +104,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.36, ease: [0.22, 1, 0.36, 1] as const }}
-          className="mx-auto w-full max-w-6xl px-6 py-10 md:py-14"
+          className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:py-14"
         >
           {children}
         </motion.main>
@@ -112,3 +112,4 @@ export function SiteShell({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
