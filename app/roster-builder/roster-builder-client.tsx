@@ -154,6 +154,7 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
   const [isSaving, setIsSaving] = useState(false);
   const [showOverview, setShowOverview] = useState(false);
   const [expandedRosterHistoryByTag, setExpandedRosterHistoryByTag] = useState<Record<string, boolean>>({});
+  const [expandedOverviewHistoryByTag, setExpandedOverviewHistoryByTag] = useState<Record<string, boolean>>({});
 
   // Fetch saved drafts on mount
   useEffect(() => {
@@ -253,6 +254,39 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
     if (!normalizedTag) {
       pushToast("Error: Enter a clan tag before fetching.");
       return;
+    }
+
+    // If rosters already exist, prompt to save then replace
+    if (rosters.length > 0) {
+      const existing = rosters[0];
+      const shouldSave = window.confirm(
+        `Save the current roster for "${existing.clanName}" before switching clans?`
+      );
+      if (shouldSave && existing.assignedPlayers.length > 0) {
+        const draftTitle = window.prompt("Save current roster as:", existing.clanName);
+        if (draftTitle?.trim()) {
+          try {
+            const res = await fetch("/api/rosters", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                title: draftTitle.trim(),
+                player_tags: existing.assignedPlayers.map((p) => p.player_tag),
+                clan_tag: existing.clanTag !== "—" ? existing.clanTag : null,
+                badge_url: existing.badgeUrl ?? null
+              })
+            });
+            if (res.ok) {
+              const saved = await res.json() as SavedRoster;
+              setSavedRosters((curr) => [saved, ...curr.filter((r) => r.id !== saved.id)]);
+              pushToast(`Saved "${draftTitle.trim()}" — switching to new clan.`);
+            }
+          } catch { /* silent */ }
+        }
+      }
+      // Replace rosters entirely
+      setRosters([]);
+      setExpandedRosterHistoryByTag({});
     }
 
     setIsFetchingClan(true);
@@ -496,15 +530,48 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
                   </div>
                 </div>
                 <div className="divide-y divide-black/5">
-                  {roster.assignedPlayers.map((p, idx) => (
-                    <div key={p.player_tag} className="flex items-center gap-3 py-2">
-                      <span className="text-[11px] text-ink/40 w-5 text-right shrink-0">{idx + 1}</span>
-                      <div className="min-w-0">
-                        <p className="text-sm text-ink truncate">{p.player_name}</p>
-                        <p className="text-[10px] uppercase tracking-wider text-ink/45">TH{p.latest_th_level || "?"} · {p.latest_league_label}</p>
+                  {roster.assignedPlayers.map((p, idx) => {
+                    const ovKey = `ov-${roster.id}-${p.player_tag}`;
+                    const isOpen = Boolean(expandedOverviewHistoryByTag[ovKey]);
+                    return (
+                      <div key={p.player_tag} className="py-2 space-y-2">
+                        <div className="flex items-center gap-3">
+                          <span className="text-[11px] text-ink/40 w-5 text-right shrink-0">{idx + 1}</span>
+                          <button
+                            type="button"
+                            onClick={() => setExpandedOverviewHistoryByTag((curr) => ({ ...curr, [ovKey]: !curr[ovKey] }))}
+                            className="min-w-0 text-left"
+                          >
+                            <p className="text-sm text-ink underline-offset-2 hover:underline truncate">{p.player_name}</p>
+                            <p className="text-[10px] uppercase tracking-wider text-ink/45">TH{p.latest_th_level || "?"} · {p.latest_league_label}</p>
+                          </button>
+                        </div>
+                        <AnimatePresence initial={false}>
+                          {isOpen && p.recent_cwl_history.length > 0 && (
+                            <motion.div
+                              key={ovKey}
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="overflow-hidden ml-8 space-y-1"
+                            >
+                              {p.recent_cwl_history.map((entry, ei) => (
+                                <div key={ei} className="rounded-lg border border-black/10 bg-paper px-3 py-2">
+                                  <p className="text-xs uppercase tracking-[0.14em] text-ink/60">{entry.month_label} | {entry.roster_th} | {entry.clan_name}</p>
+                                  <p className="text-[11px] uppercase tracking-[0.12em] text-ink/45">{entry.league_label} · {entry.totals}</p>
+                                </div>
+                              ))}
+                            </motion.div>
+                          )}
+                          {isOpen && p.recent_cwl_history.length === 0 && (
+                            <motion.p key={`${ovKey}-empty`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                              className="ml-8 text-xs text-ink/40 italic"
+                            >No CWL history.</motion.p>
+                          )}
+                        </AnimatePresence>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {roster.assignedPlayers.length === 0 && (
                     <p className="text-xs text-ink/40 italic py-2">No players drafted yet.</p>
                   )}
