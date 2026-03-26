@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 export type PlayerBankHistoryEntry = {
@@ -37,6 +37,13 @@ type ClanInfoResponse = {
 };
 
 type SortMode = "th" | "league_stars";
+
+type SavedRoster = {
+  id: string;
+  title: string;
+  player_tags: string[];
+  updated_at: string;
+};
 
 type Roster = {
   id: string;
@@ -141,6 +148,18 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastKey, setToastKey] = useState(0);
   const [draftTargetByPlayer, setDraftTargetByPlayer] = useState<Record<string, string>>({});
+  const [savedRosters, setSavedRosters] = useState<SavedRoster[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Fetch saved drafts on mount
+  useEffect(() => {
+    fetch("/api/rosters")
+      .then((res) => res.json())
+      .then((data: unknown) => {
+        if (Array.isArray(data)) setSavedRosters(data as SavedRoster[]);
+      })
+      .catch(() => {}); // silently fail – non-critical
+  }, []);
 
   function pushToast(message: string) {
     setToastMessage(message);
@@ -149,6 +168,65 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
     setTimeout(() => {
       setToastMessage((current) => (current === message ? null : current));
     }, 3600);
+  }
+
+  async function handleSaveDraft(roster: Roster) {
+    const title = window.prompt("Save as (name this draft):", roster.clanName);
+    if (!title?.trim()) return;
+    setIsSaving(true);
+    try {
+      const res = await fetch("/api/rosters", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title.trim(),
+          player_tags: roster.assignedPlayers.map((p) => p.player_tag)
+        })
+      });
+      const saved = await res.json() as SavedRoster;
+      if (!res.ok) { pushToast(`Error saving draft.`); return; }
+      setSavedRosters((curr) => [saved, ...curr.filter((r) => r.id !== saved.id)]);
+      pushToast(`Saved "${saved.title}" with ${roster.assignedPlayers.length} players.`);
+    } catch (err) {
+      pushToast(err instanceof Error ? `Error: ${err.message}` : "Error: Failed to save.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleDeleteDraft(id: string, title: string) {
+    try {
+      await fetch(`/api/rosters?id=${id}`, { method: "DELETE" });
+      setSavedRosters((curr) => curr.filter((r) => r.id !== id));
+      pushToast(`Deleted "${title}".`);
+    } catch {
+      pushToast("Error: Could not delete draft.");
+    }
+  }
+
+  function handleLoadDraft(draft: SavedRoster) {
+    if (rosters.length === 0) {
+      pushToast("Error: Fetch a clan to create a roster board first.");
+      return;
+    }
+    const targetRoster = rosters[0];
+    const playersToLoad = draft.player_tags
+      .map((tag) => initialPlayers.find((p) => p.player_tag === tag))
+      .filter((p): p is PlayerBankEntry => p !== undefined);
+
+    if (playersToLoad.length === 0) {
+      pushToast("No matching players found in the current player bank.");
+      return;
+    }
+
+    setRosters((curr) =>
+      curr.map((r) =>
+        r.id !== targetRoster.id
+          ? r
+          : { ...r, assignedPlayers: sortPlayersForRoster(playersToLoad, r.sortMode) }
+      )
+    );
+    pushToast(`Loaded "${draft.title}" into ${targetRoster.clanName} (${playersToLoad.length} players).`);
   }
 
   async function handleFetchClan() {
@@ -323,6 +401,43 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
 
   return (
     <div className="space-y-8">
+
+      {/* ─── Saved Drafts Panel ─── */}
+      {savedRosters.length > 0 && (
+        <section className="section-frame px-4 py-5 sm:px-6 space-y-4">
+          <p className="data-label">Saved Drafts</p>
+          <div className="divide-y divide-black/5">
+            {savedRosters.map((draft) => (
+              <div key={draft.id} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-ink truncate">{draft.title}</p>
+                  <p className="text-[11px] uppercase tracking-[0.16em] text-ink/48 mt-0.5">
+                    {draft.player_tags.length} players · saved {new Date(draft.updated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleLoadDraft(draft)}
+                    className="rounded-xl border border-black/10 bg-parchment px-3 py-1.5 text-xs uppercase tracking-[0.18em] text-ink/70 transition-colors hover:bg-paper"
+                  >
+                    Load
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteDraft(draft.id, draft.title)}
+                    className="rounded-xl border border-brick/25 bg-brick/10 px-3 py-1.5 text-xs uppercase tracking-[0.18em] text-brick/80 transition-colors hover:bg-brick/15"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ─── Clan Config ─── */}
       <section className="section-frame space-y-5 px-4 py-6 sm:px-6 md:px-8">
         <p className="data-label">Clan Config</p>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(220px,1fr)_140px_190px_auto]">
@@ -632,9 +747,21 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
                 </div>
 
                 <div className="border-t border-black/10 px-4 py-4 sm:px-6">
-                  <p className="text-xs uppercase tracking-[0.16em] text-ink/58">
-                    {compositionText(roster.assignedPlayers)}
-                  </p>
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <p className="text-xs uppercase tracking-[0.16em] text-ink/58">
+                      {compositionText(roster.assignedPlayers)}
+                    </p>
+                    {roster.assignedPlayers.length > 0 && (
+                      <button
+                        type="button"
+                        disabled={isSaving}
+                        onClick={() => handleSaveDraft(roster)}
+                        className="rounded-full border border-black/15 bg-ink px-4 py-1.5 text-[10px] uppercase tracking-[0.22em] text-paper transition-colors hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isSaving ? "Saving…" : "Save Draft"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </section>
             ))
@@ -644,4 +771,3 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
     </div>
   );
 }
-
