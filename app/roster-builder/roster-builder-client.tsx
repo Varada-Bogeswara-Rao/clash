@@ -206,11 +206,6 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
   }
 
   function handleLoadDraft(draft: SavedRoster) {
-    if (rosters.length === 0) {
-      pushToast("Error: Fetch a clan to create a roster board first.");
-      return;
-    }
-    const targetRoster = rosters[0];
     const playersToLoad = draft.player_tags
       .map((tag) => initialPlayers.find((p) => p.player_tag === tag))
       .filter((p): p is PlayerBankEntry => p !== undefined);
@@ -220,6 +215,24 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
       return;
     }
 
+    // Auto-create a roster board if none exist
+    if (rosters.length === 0) {
+      const newRoster: Roster = {
+        id: createRosterId(draft.id),
+        clanName: draft.title,
+        clanTag: "—",
+        clanLeague: "—",
+        badgeUrl: null,
+        capacity: Math.max(playersToLoad.length, 15),
+        sortMode: "th",
+        assignedPlayers: sortPlayersForRoster(playersToLoad, "th")
+      };
+      setRosters([newRoster]);
+      pushToast(`Loaded "${draft.title}" — ${playersToLoad.length} players populated into new roster.`);
+      return;
+    }
+
+    const targetRoster = rosters[0];
     setRosters((curr) =>
       curr.map((r) =>
         r.id !== targetRoster.id
