@@ -54,7 +54,7 @@ async function runDailyFetch(request: Request) {
     }
 
     const trackedPlayers = (data ?? []) as TrackedPlayer[];
-    const snapshotDate = new Date().toISOString().slice(0, 10);
+    const date = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
     const inserts: Array<{
       player_tag: string;
       date: string;
@@ -93,7 +93,7 @@ async function runDailyFetch(request: Request) {
 
       inserts.push({
         player_tag: player.tag,
-        date: snapshotDate,
+        date,
         clan_tag: payload.clan?.tag ?? null,
         clan_name: payload.clan?.name ?? null
       });
@@ -123,7 +123,7 @@ async function runDailyFetch(request: Request) {
     }
 
     return NextResponse.json({
-      snapshotDate,
+      snapshotDate: date,
       trackedPlayers: trackedPlayers.length,
       inserted: inserts.length,
       failures,
@@ -148,3 +148,4 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   return runDailyFetch(request);
 }
+
