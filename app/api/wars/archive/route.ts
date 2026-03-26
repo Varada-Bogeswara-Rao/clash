@@ -148,7 +148,7 @@ function buildClanTagList() {
 
 export async function POST() {
   const clashApiKey = process.env.CLASH_API_KEY;
-  const royaleApiKey = process.env.ROYALE_API_KEY ?? clashApiKey;
+  const royaleApiKey = (process.env.ROYALE_API_KEY ?? clashApiKey) ?? "";
   const clanTags = buildClanTagList();
 
   if (clanTags.length === 0) {
