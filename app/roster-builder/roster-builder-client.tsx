@@ -150,6 +150,7 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
   const [draftTargetByPlayer, setDraftTargetByPlayer] = useState<Record<string, string>>({});
   const [savedRosters, setSavedRosters] = useState<SavedRoster[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [showOverview, setShowOverview] = useState(false);
 
   // Fetch saved drafts on mount
   useEffect(() => {
@@ -399,6 +400,14 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
     );
   }
 
+  function handleChangeCapacity(rosterId: string, newCapacity: number | "") {
+    setRosters((current) =>
+      current.map((roster) =>
+        roster.id !== rosterId ? roster : { ...roster, capacity: typeof newCapacity === "number" && newCapacity > 0 ? newCapacity : roster.capacity }
+      )
+    );
+  }
+
   return (
     <div className="space-y-8">
 
@@ -437,7 +446,57 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
         </section>
       )}
 
-      {/* ─── Clan Config ─── */}
+      {/* ─── Overview Button ─── */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setShowOverview((v) => !v)}
+          className="rounded-full border border-black/15 bg-ink px-5 py-2 text-xs uppercase tracking-[0.22em] text-paper transition-colors hover:bg-ink/90"
+        >
+          {showOverview ? "Hide Overview" : "Roster Overview"}
+        </button>
+      </div>
+
+      {/* ─── Overview Panel ─── */}
+      {showOverview && rosters.length > 0 && (
+        <section className="section-frame px-4 py-6 sm:px-8 sm:py-8 space-y-8">
+          <div className="space-y-2">
+            <p className="eyebrow">Full Roster Summary</p>
+            <h2 className="font-serif-display text-4xl tracking-tight text-ink">Overview</h2>
+            <p className="text-sm text-ink/60">{rosters.length} clan{rosters.length > 1 ? "s" : ""} · {rosters.reduce((sum, r) => sum + r.assignedPlayers.length, 0)} players drafted total</p>
+          </div>
+          <div className="grid gap-8 md:grid-cols-2">
+            {rosters.map((roster) => (
+              <div key={`ov-${roster.id}`} className="space-y-3">
+                <div className="flex items-center gap-3 border-b border-black/8 pb-3">
+                  {roster.badgeUrl && (
+                    <Image src={roster.badgeUrl} alt={roster.clanName} width={32} height={32} className="h-8 w-8 rounded-full border border-black/10" />
+                  )}
+                  <div>
+                    <p className="font-serif-display text-2xl text-ink">{roster.clanName}</p>
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-ink/50">{roster.clanTag} · {roster.assignedPlayers.length}/{roster.capacity} Players</p>
+                  </div>
+                </div>
+                <div className="divide-y divide-black/5">
+                  {roster.assignedPlayers.map((p, idx) => (
+                    <div key={p.player_tag} className="flex items-center gap-3 py-2">
+                      <span className="text-[11px] text-ink/40 w-5 text-right shrink-0">{idx + 1}</span>
+                      <div className="min-w-0">
+                        <p className="text-sm text-ink truncate">{p.player_name}</p>
+                        <p className="text-[10px] uppercase tracking-wider text-ink/45">TH{p.latest_th_level || "?"} · {p.latest_league_label}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {roster.assignedPlayers.length === 0 && (
+                    <p className="text-xs text-ink/40 italic py-2">No players drafted yet.</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="section-frame space-y-5 px-4 py-6 sm:px-6 md:px-8">
         <p className="data-label">Clan Config</p>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(220px,1fr)_140px_190px_auto]">
@@ -688,9 +747,20 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
                         <option value="th">TH Level</option>
                         <option value="league_stars">League + Stars</option>
                       </select>
-                      <p className="rounded-full border border-black/10 bg-black/5 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-ink/65">
-                        {roster.assignedPlayers.length} / {roster.capacity} Players
-                      </p>
+                      <div className="flex items-center gap-1 rounded-full border border-black/10 bg-black/5 px-3 py-1">
+                        <span className="text-[11px] uppercase tracking-[0.2em] text-ink/65">
+                          {roster.assignedPlayers.length} /
+                        </span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={200}
+                          value={roster.capacity}
+                          onChange={(e) => handleChangeCapacity(roster.id, e.target.value === "" ? "" : Number(e.target.value))}
+                          className="w-10 bg-transparent text-[11px] uppercase tracking-[0.2em] text-ink/65 outline-none text-center"
+                        />
+                        <span className="text-[11px] uppercase tracking-[0.2em] text-ink/65">Players</span>
+                      </div>
                     </div>
                   </div>
                   <p className="mt-3 text-[11px] uppercase tracking-[0.16em] text-ink/48">
