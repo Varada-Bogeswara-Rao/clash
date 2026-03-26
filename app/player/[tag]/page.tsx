@@ -13,11 +13,35 @@ type PlayerHistoryRow = {
   date: string;
   clan_tag: string | null;
   clan_name: string | null;
+  created_at: string;
 };
 
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium"
-});
+function formatIstTimestamp(value: string | null | undefined) {
+  if (!value) {
+    return "Unknown";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown";
+  }
+
+  const datePart = date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "Asia/Kolkata"
+  });
+  const timePart = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata",
+    timeZoneName: "short"
+  });
+
+  return `${datePart} - ${timePart}`;
+}
 
 function normalizeTag(tag: string | null | undefined) {
   if (!tag) {
@@ -60,7 +84,7 @@ export default async function PlayerProfilePage({
   const supabase = getSupabaseAdmin();
   const thresholdDateObj = new Date();
   thresholdDateObj.setUTCDate(thresholdDateObj.getUTCDate() - 30);
-  const thresholdDate = thresholdDateObj.toISOString().slice(0, 10);
+  const thresholdCreatedAt = thresholdDateObj.toISOString();
 
   const [playerResult, historyResult] = await Promise.all([
     supabase
@@ -70,10 +94,10 @@ export default async function PlayerProfilePage({
       .maybeSingle(),
     supabase
       .from("player_history")
-      .select("id, date, clan_tag, clan_name")
+      .select("id, date, clan_tag, clan_name, created_at")
       .eq("player_tag", playerTag)
-      .gte("date", thresholdDate)
-      .order("date", { ascending: false })
+      .gte("created_at", thresholdCreatedAt)
+      .order("created_at", { ascending: false })
       .limit(30)
   ]);
 
@@ -145,6 +169,9 @@ export default async function PlayerProfilePage({
                     const clanTag = normalizeTag(row.clan_tag);
                     const inHomeClan =
                       targetClanTag.length > 0 && clanTag.length > 0 && clanTag === targetClanTag;
+                    const formattedTimestamp = formatIstTimestamp(
+                      row.created_at ?? `${row.date}T00:00:00`
+                    );
 
                     return (
                       <tr
@@ -152,7 +179,7 @@ export default async function PlayerProfilePage({
                         className="border-b border-black/10 last:border-b-0 hover:bg-paper"
                       >
                         <td className="whitespace-nowrap px-3 py-3 text-ink/70 sm:px-5 sm:py-4">
-                          {dateFormatter.format(new Date(`${row.date}T00:00:00`))}
+                          {formattedTimestamp}
                         </td>
                         <td className="px-3 py-3 text-base text-ink sm:px-5 sm:py-4">
                           {row.clan_name ? (

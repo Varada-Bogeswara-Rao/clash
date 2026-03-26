@@ -54,7 +54,8 @@ async function runDailyFetch(request: Request) {
     }
 
     const trackedPlayers = (data ?? []) as TrackedPlayer[];
-    const date = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+    const snapshotDate = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+    const timestamp = new Date().toISOString();
     const inserts: Array<{
       player_tag: string;
       date: string;
@@ -93,7 +94,7 @@ async function runDailyFetch(request: Request) {
 
       inserts.push({
         player_tag: player.tag,
-        date,
+        date: timestamp,
         clan_tag: payload.clan?.tag ?? null,
         clan_name: payload.clan?.name ?? null
       });
@@ -102,7 +103,7 @@ async function runDailyFetch(request: Request) {
     if (inserts.length > 0) {
       const { error: insertError } = await supabase
         .from("player_history")
-        .upsert(inserts, { onConflict: "player_tag,date" });
+        .insert(inserts);
 
       if (insertError) {
         throw insertError;
@@ -123,7 +124,7 @@ async function runDailyFetch(request: Request) {
     }
 
     return NextResponse.json({
-      snapshotDate: date,
+      snapshotDate,
       trackedPlayers: trackedPlayers.length,
       inserted: inserts.length,
       failures,
