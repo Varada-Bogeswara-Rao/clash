@@ -13,7 +13,7 @@ export async function GET() {
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from("saved_rosters")
-      .select("id, title, player_tags, updated_at")
+      .select("id, title, player_tags, clan_tag, badge_url, updated_at")
       .order("updated_at", { ascending: false });
 
     if (error) return jsonError(error.message, 500);
@@ -26,30 +26,35 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json() as { id?: string; title: string; player_tags: string[] };
+    const body = await request.json() as { id?: string; title: string; player_tags: string[]; clan_tag?: string; badge_url?: string | null };
 
     if (!body.title?.trim()) return jsonError("title is required.", 400);
     if (!Array.isArray(body.player_tags)) return jsonError("player_tags must be an array.", 400);
 
     const supabase = getSupabaseAdmin();
     const now = new Date().toISOString();
+    const payload = {
+      title: body.title.trim(),
+      player_tags: body.player_tags,
+      clan_tag: body.clan_tag ?? null,
+      badge_url: body.badge_url ?? null,
+      updated_at: now
+    };
 
     let result;
 
     if (body.id) {
-      // Update existing
       result = await supabase
         .from("saved_rosters")
-        .update({ title: body.title.trim(), player_tags: body.player_tags, updated_at: now })
+        .update(payload)
         .eq("id", body.id)
-        .select("id, title, player_tags, updated_at")
+        .select("id, title, player_tags, clan_tag, badge_url, updated_at")
         .single();
     } else {
-      // Insert new
       result = await supabase
         .from("saved_rosters")
-        .insert({ title: body.title.trim(), player_tags: body.player_tags, updated_at: now })
-        .select("id, title, player_tags, updated_at")
+        .insert(payload)
+        .select("id, title, player_tags, clan_tag, badge_url, updated_at")
         .single();
     }
 

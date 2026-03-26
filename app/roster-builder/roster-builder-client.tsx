@@ -42,6 +42,8 @@ type SavedRoster = {
   id: string;
   title: string;
   player_tags: string[];
+  clan_tag: string | null;
+  badge_url: string | null;
   updated_at: string;
 };
 
@@ -151,6 +153,7 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
   const [savedRosters, setSavedRosters] = useState<SavedRoster[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [showOverview, setShowOverview] = useState(false);
+  const [expandedRosterHistoryByTag, setExpandedRosterHistoryByTag] = useState<Record<string, boolean>>({});
 
   // Fetch saved drafts on mount
   useEffect(() => {
@@ -181,7 +184,9 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: title.trim(),
-          player_tags: roster.assignedPlayers.map((p) => p.player_tag)
+          player_tags: roster.assignedPlayers.map((p) => p.player_tag),
+          clan_tag: roster.clanTag !== "—" ? roster.clanTag : null,
+          badge_url: roster.badgeUrl ?? null
         })
       });
       const saved = await res.json() as SavedRoster;
@@ -220,9 +225,9 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
       const newRoster: Roster = {
         id: createRosterId(draft.id),
         clanName: draft.title,
-        clanTag: "—",
+        clanTag: draft.clan_tag ?? "—",
         clanLeague: "—",
-        badgeUrl: null,
+        badgeUrl: draft.badge_url ?? null,
         capacity: Math.max(playersToLoad.length, 15),
         sortMode: "th",
         assignedPlayers: sortPlayersForRoster(playersToLoad, "th")
@@ -803,24 +808,65 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
                               initial={{ opacity: 0, y: 8 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -8 }}
-                              className="flex items-center justify-between gap-3 rounded-2xl border border-black/10 bg-paper px-3 py-3"
+                              className="rounded-2xl border border-black/10 bg-paper px-3 py-3"
                             >
-                              <div>
-                                <p className="text-base text-ink">{player.player_name}</p>
-                                <p className="text-[11px] uppercase tracking-[0.18em] text-ink/55">
-                                  {player.player_tag} | TH{player.latest_th_level || "?"}
-                                </p>
-                                <p className="text-[11px] uppercase tracking-[0.16em] text-ink/48">
-                                  {player.latest_league_label} | {player.latest_stars} Stars
-                                </p>
+                              <div className="flex items-center justify-between gap-3">
+                                <div>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setExpandedRosterHistoryByTag((curr) => ({
+                                        ...curr,
+                                        [`${roster.id}-${player.player_tag}`]: !curr[`${roster.id}-${player.player_tag}`]
+                                      }))
+                                    }
+                                    className="text-left text-base text-ink underline-offset-2 hover:underline"
+                                  >
+                                    {player.player_name}
+                                  </button>
+                                  <p className="text-[11px] uppercase tracking-[0.18em] text-ink/55">
+                                    {player.player_tag} | TH{player.latest_th_level || "?"}
+                                  </p>
+                                  <p className="text-[11px] uppercase tracking-[0.16em] text-ink/48">
+                                    {player.latest_league_label} | {player.latest_stars} Stars
+                                  </p>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemovePlayer(roster.id, player.player_tag)}
+                                  className="rounded-xl border border-brick/30 bg-brick/10 px-3 py-2 text-xs uppercase tracking-[0.16em] text-brick transition-colors hover:bg-brick/15"
+                                >
+                                  Remove
+                                </button>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => handleRemovePlayer(roster.id, player.player_tag)}
-                                className="rounded-xl border border-brick/30 bg-brick/10 px-3 py-2 text-xs uppercase tracking-[0.16em] text-brick transition-colors hover:bg-brick/15"
-                              >
-                                Remove
-                              </button>
+
+                              <AnimatePresence initial={false}>
+                                {expandedRosterHistoryByTag[`${roster.id}-${player.player_tag}`] && (
+                                  <motion.div
+                                    key={`rh-${roster.id}-${player.player_tag}`}
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="mt-3 overflow-hidden rounded-xl border border-black/10 bg-black/5"
+                                  >
+                                    <div className="space-y-2 p-3">
+                                      <p className="text-[10px] uppercase tracking-[0.18em] text-ink/55">Past 3 Months CWL</p>
+                                      {player.recent_cwl_history.length === 0 ? (
+                                        <p className="text-xs text-ink/60">No CWL history available.</p>
+                                      ) : (
+                                        player.recent_cwl_history.map((entry, idx) => (
+                                          <div key={`${player.player_tag}-rh-${idx}`} className="rounded-lg border border-black/10 bg-paper px-3 py-2">
+                                            <p className="text-xs uppercase tracking-[0.16em] text-ink/60">{entry.month_label} | {entry.roster_th}</p>
+                                            <p className="text-sm text-ink">{entry.clan_name}</p>
+                                            <p className="text-[11px] uppercase tracking-[0.14em] text-ink/55">{entry.league_label}</p>
+                                            <p className="text-[11px] text-ink/60">{entry.totals}</p>
+                                          </div>
+                                        ))
+                                      )}
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </motion.div>
                           ))}
                         </AnimatePresence>
