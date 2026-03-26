@@ -31,6 +31,7 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const rawTag = (url.searchParams.get("tag") ?? "").trim();
     const clashApiKey = process.env.CLASH_API_KEY;
+    const royaleApiKey = process.env.ROYALE_API_KEY ?? clashApiKey;
 
     if (!rawTag) {
       return jsonError("Missing `tag` query parameter.", 400);
@@ -47,6 +48,7 @@ export async function GET(request: Request) {
       method: "GET",
       headers: {
         Authorization: `Bearer ${clashApiKey}`,
+        auth: royaleApiKey,
         Accept: "application/json"
       },
       cache: "no-store"

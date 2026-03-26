@@ -23,6 +23,7 @@ async function runDailyFetch(request: Request) {
   const authorization = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
   const clashApiKey = process.env.CLASH_API_KEY;
+  const royaleApiKey = process.env.ROYALE_API_KEY ?? clashApiKey;
 
   if (!cronSecret) {
     return NextResponse.json(
@@ -75,7 +76,8 @@ async function runDailyFetch(request: Request) {
         {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${clashApiKey}`
+            Authorization: `Bearer ${clashApiKey}`,
+            auth: royaleApiKey
           },
           cache: "no-store"
         }

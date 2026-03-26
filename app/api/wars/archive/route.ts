@@ -148,6 +148,7 @@ function buildClanTagList() {
 
 export async function POST() {
   const clashApiKey = process.env.CLASH_API_KEY;
+  const royaleApiKey = process.env.ROYALE_API_KEY ?? clashApiKey;
   const clanTags = buildClanTagList();
 
   if (clanTags.length === 0) {
@@ -179,6 +180,7 @@ export async function POST() {
           method: "GET",
           headers: {
             Authorization: `Bearer ${clashApiKey}`,
+            auth: royaleApiKey,
             Accept: "application/json"
           },
           cache: "no-store"
