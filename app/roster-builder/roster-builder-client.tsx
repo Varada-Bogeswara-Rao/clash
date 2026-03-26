@@ -49,6 +49,7 @@ type SavedRoster = {
 
 type Roster = {
   id: string;
+  editingDraftId?: string;  // set when editing an existing saved draft
   clanName: string;
   clanTag: string;
   clanLeague: string;
@@ -184,6 +185,7 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          ...(roster.editingDraftId ? { id: roster.editingDraftId } : {}),
           title: title.trim(),
           player_tags: roster.assignedPlayers.map((p) => p.player_tag),
           clan_tag: roster.clanTag !== "—" ? roster.clanTag : null,
@@ -199,6 +201,37 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
     } finally {
       setIsSaving(false);
     }
+  }
+
+  function handleEditDraft(draft: SavedRoster) {
+    const playersToLoad = draft.player_tags
+      .map((tag) => initialPlayers.find((p) => p.player_tag === tag))
+      .filter((p): p is PlayerBankEntry => p !== undefined);
+
+    // Prompt to save current active roster if one exists
+    if (rosters.length > 0 && rosters[0].assignedPlayers.length > 0) {
+      const ok = window.confirm(`Discard current active roster "${rosters[0].clanName}" and load "${draft.title}" for editing?`);
+      if (!ok) return;
+    }
+
+    // Remove from savedRosters so its players are unlocked in the bank
+    setSavedRosters((curr) => curr.filter((r) => r.id !== draft.id));
+    setExpandedRosterHistoryByTag({});
+
+    const newRoster: Roster = {
+      id: createRosterId(draft.id),
+      editingDraftId: draft.id,
+      clanName: draft.title,
+      clanTag: draft.clan_tag ?? "—",
+      clanLeague: "—",
+      badgeUrl: draft.badge_url ?? null,
+      capacity: Math.max(playersToLoad.length, 15),
+      sortMode: "th",
+      assignedPlayers: sortPlayersForRoster(playersToLoad, "th")
+    };
+    setRosters([newRoster]);
+    setShowOverview(false);
+    pushToast(`Loaded "${draft.title}" for editing — ${playersToLoad.length} players. Save Draft when done.`);
   }
 
   async function handleDeleteDraft(id: string, title: string) {
@@ -524,13 +557,22 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
                           {draft.clan_tag ?? "—"} · {draft.player_tags.length} players · {new Date(draft.updated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteDraft(draft.id, draft.title)}
-                        className="ml-auto shrink-0 text-[10px] uppercase tracking-[0.16em] text-brick/60 hover:text-brick transition-colors"
-                      >
-                        Delete
-                      </button>
+                      <div className="ml-auto shrink-0 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleEditDraft(draft)}
+                          className="text-[10px] uppercase tracking-[0.16em] text-ink/60 hover:text-ink transition-colors border border-black/10 rounded-lg px-2 py-1"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteDraft(draft.id, draft.title)}
+                          className="text-[10px] uppercase tracking-[0.16em] text-brick/60 hover:text-brick transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                     <div className="divide-y divide-black/5">
                       {players.map((p, idx) => {
