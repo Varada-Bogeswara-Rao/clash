@@ -147,8 +147,7 @@ function buildClanTagList() {
 }
 
 export async function POST() {
-  const clashApiKey = process.env.CLASH_API_KEY;
-  const royaleApiKey = (process.env.ROYALE_API_KEY ?? clashApiKey) ?? "";
+  const apiKey = process.env.ROYALE_API_KEY || process.env.CLASH_API_KEY;
   const clanTags = buildClanTagList();
 
   if (clanTags.length === 0) {
@@ -161,9 +160,9 @@ export async function POST() {
     );
   }
 
-  if (!clashApiKey) {
+  if (!apiKey) {
     return NextResponse.json(
-      { error: "CLASH_API_KEY is not configured." },
+      { error: "ROYALE_API_KEY or CLASH_API_KEY must be configured." },
       { status: 500 }
     );
   }
@@ -179,8 +178,7 @@ export async function POST() {
         {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${clashApiKey}`,
-            auth: royaleApiKey,
+            Authorization: `Bearer ${apiKey}`,
             Accept: "application/json"
           },
           cache: "no-store"

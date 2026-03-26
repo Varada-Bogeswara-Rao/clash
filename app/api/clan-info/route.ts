@@ -30,15 +30,14 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const rawTag = (url.searchParams.get("tag") ?? "").trim();
-    const clashApiKey = process.env.CLASH_API_KEY;
-    const royaleApiKey = (process.env.ROYALE_API_KEY ?? clashApiKey) ?? "";
+    const apiKey = process.env.ROYALE_API_KEY || process.env.CLASH_API_KEY;
 
     if (!rawTag) {
       return jsonError("Missing `tag` query parameter.", 400);
     }
 
-    if (!clashApiKey) {
-      return jsonError("CLASH_API_KEY is not configured.", 500);
+    if (!apiKey) {
+      return jsonError("ROYALE_API_KEY or CLASH_API_KEY is not configured.", 500);
     }
 
     const normalizedTag = rawTag.startsWith("#") ? rawTag : `#${rawTag}`;
@@ -47,8 +46,7 @@ export async function GET(request: Request) {
     const response = await fetch(`https://cocproxy.royaleapi.dev/v1/clans/${encodedTag}`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${clashApiKey}`,
-        auth: royaleApiKey,
+        Authorization: `Bearer ${apiKey}`,
         Accept: "application/json"
       },
       cache: "no-store"

@@ -22,8 +22,7 @@ const delay = (ms: number) =>
 async function runDailyFetch(request: Request) {
   const authorization = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
-  const clashApiKey = process.env.CLASH_API_KEY;
-  const royaleApiKey = (process.env.ROYALE_API_KEY ?? clashApiKey) ?? "";
+  const apiKey = process.env.ROYALE_API_KEY || process.env.CLASH_API_KEY;
 
   if (!cronSecret) {
     return NextResponse.json(
@@ -36,9 +35,9 @@ async function runDailyFetch(request: Request) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  if (!clashApiKey) {
+  if (!apiKey) {
     return NextResponse.json(
-      { error: "CLASH_API_KEY is not configured." },
+      { error: "ROYALE_API_KEY or CLASH_API_KEY must be configured." },
       { status: 500 }
     );
   }
@@ -76,8 +75,7 @@ async function runDailyFetch(request: Request) {
         {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${clashApiKey}`,
-            auth: royaleApiKey
+            Authorization: `Bearer ${apiKey}`
           },
           cache: "no-store"
         }
