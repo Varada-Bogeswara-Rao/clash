@@ -355,6 +355,17 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
     return ["All Leagues", ...options];
   }, [initialPlayers]);
 
+  // Map player_tag -> saved roster title for all players already saved to a completed roster
+  const savedAssignedMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const draft of savedRosters) {
+      for (const tag of draft.player_tags) {
+        if (!map.has(tag)) map.set(tag, draft.title);
+      }
+    }
+    return map;
+  }, [savedRosters]);
+
   const filteredPlayers = useMemo(() => {
     const normalized = searchTerm.trim().toLowerCase();
 
@@ -397,14 +408,19 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
 
     const existingRoster = playerRosterLookup(player.player_tag);
     if (existingRoster && existingRoster.id !== targetRoster.id) {
-      pushToast(
-        `Error: ${player.player_name} is already drafted in ${existingRoster.clanName}.`
-      );
+      pushToast(`Error: ${player.player_name} is already drafted in ${existingRoster.clanName}.`);
       return;
     }
 
     if (existingRoster && existingRoster.id === targetRoster.id) {
       pushToast(`Error: ${player.player_name} is already in ${targetRoster.clanName}.`);
+      return;
+    }
+
+    // Block if already saved in a completed roster
+    const savedIn = savedAssignedMap.get(player.player_tag);
+    if (savedIn) {
+      pushToast(`Error: ${player.player_name} is already assigned to "${savedIn}".`);
       return;
     }
 
@@ -658,6 +674,13 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
               <div className="space-y-2">
                 {filteredPlayers.map((player) => {
                   const draftedIn = playerRosterLookup(player.player_tag);
+                  const savedIn = savedAssignedMap.get(player.player_tag);
+                  const isLocked = Boolean(draftedIn ?? savedIn);
+                  const lockedLabel = draftedIn
+                    ? `✓ ${draftedIn.clanName}`
+                    : savedIn
+                    ? `✓ ${savedIn}`
+                    : null;
                   const selectedTarget =
                     draftTargetByPlayer[player.player_tag] || rosters[0]?.id || "";
                   const isHistoryOpen = Boolean(expandedHistoryByTag[player.player_tag]);
@@ -666,7 +689,7 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
                     <div
                       key={player.player_tag}
                       className={`rounded-2xl border px-3 py-3 transition-opacity ${
-                        draftedIn
+                        isLocked
                           ? "border-sage/20 bg-sage/5 opacity-60"
                           : "border-black/10 bg-paper"
                       }`}
@@ -693,9 +716,9 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
                           </p>
                         </div>
 
-                        {draftedIn ? (
+                        {lockedLabel ? (
                           <span className="shrink-0 rounded-full border border-sage/30 bg-sage/15 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-sage">
-                            ✓ {draftedIn.clanName}
+                            {lockedLabel}
                           </span>
                         ) : null}
                       </div>
@@ -738,9 +761,9 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
                       </AnimatePresence>
 
                       <div className="mt-3 flex gap-2">
-                        {draftedIn ? (
+                        {isLocked ? (
                           <p className="flex-1 rounded-xl border border-sage/20 bg-sage/10 px-3 py-2 text-xs uppercase tracking-[0.16em] text-sage/80 text-center">
-                            ✓ Drafted — {draftedIn.clanName}
+                            {lockedLabel}
                           </p>
                         ) : (
                           <>
