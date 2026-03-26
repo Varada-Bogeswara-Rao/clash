@@ -174,7 +174,7 @@ export async function POST() {
     for (const clanTag of clanTags) {
       const encodedClanTag = encodeURIComponent(clanTag);
       const response = await fetch(
-        `https://api.clashofclans.com/v1/clans/${encodedClanTag}/currentwar`,
+        `https://cocproxy.royaleapi.dev/v1/clans/${encodedClanTag}/currentwar`,
         {
           method: "GET",
           headers: {
@@ -423,5 +423,6 @@ export async function POST() {
     );
   }
 }
+
 
 

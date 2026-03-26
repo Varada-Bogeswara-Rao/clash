@@ -71,7 +71,7 @@ async function runDailyFetch(request: Request) {
 
       const encodedTag = encodeURIComponent(player.tag);
       const response = await fetch(
-        `https://api.clashofclans.com/v1/players/${encodedTag}`,
+        `https://cocproxy.royaleapi.dev/v1/players/${encodedTag}`,
         {
           method: "GET",
           headers: {
@@ -148,4 +148,5 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   return runDailyFetch(request);
 }
+
 

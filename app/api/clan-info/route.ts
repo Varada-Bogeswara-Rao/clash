@@ -43,7 +43,7 @@ export async function GET(request: Request) {
     const normalizedTag = rawTag.startsWith("#") ? rawTag : `#${rawTag}`;
     const encodedTag = encodeURIComponent(normalizedTag);
 
-    const response = await fetch(`https://api.clashofclans.com/v1/clans/${encodedTag}`, {
+    const response = await fetch(`https://cocproxy.royaleapi.dev/v1/clans/${encodedTag}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${clashApiKey}`,
@@ -85,3 +85,4 @@ export async function GET(request: Request) {
     return jsonError(error instanceof Error ? error.message : "Unable to fetch clan info.", 500);
   }
 }
+
