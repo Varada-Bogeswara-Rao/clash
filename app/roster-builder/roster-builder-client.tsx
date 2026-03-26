@@ -463,41 +463,6 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
   return (
     <div className="space-y-8">
 
-      {/* ─── Saved Drafts Panel ─── */}
-      {savedRosters.length > 0 && (
-        <section className="section-frame px-4 py-5 sm:px-6 space-y-4">
-          <p className="data-label">Saved Drafts</p>
-          <div className="divide-y divide-black/5">
-            {savedRosters.map((draft) => (
-              <div key={draft.id} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-ink truncate">{draft.title}</p>
-                  <p className="text-[11px] uppercase tracking-[0.16em] text-ink/48 mt-0.5">
-                    {draft.player_tags.length} players · saved {new Date(draft.updated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => handleLoadDraft(draft)}
-                    className="rounded-xl border border-black/10 bg-parchment px-3 py-1.5 text-xs uppercase tracking-[0.18em] text-ink/70 transition-colors hover:bg-paper"
-                  >
-                    Load
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteDraft(draft.id, draft.title)}
-                    className="rounded-xl border border-brick/25 bg-brick/10 px-3 py-1.5 text-xs uppercase tracking-[0.18em] text-brick/80 transition-colors hover:bg-brick/15"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
       {/* ─── Overview Button ─── */}
       <div className="flex justify-end">
         <button
@@ -505,80 +470,98 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
           onClick={() => setShowOverview((v) => !v)}
           className="rounded-full border border-black/15 bg-ink px-5 py-2 text-xs uppercase tracking-[0.22em] text-paper transition-colors hover:bg-ink/90"
         >
-          {showOverview ? "Hide Overview" : "Roster Overview"}
+          {showOverview ? "Hide Overview" : `Roster Overview${savedRosters.length > 0 ? ` (${savedRosters.length})` : ""}`}
         </button>
       </div>
 
-      {/* ─── Overview Panel ─── */}
-      {showOverview && rosters.length > 0 && (
+      {/* ─── Overview Panel — shows saved/completed rosters from DB ─── */}
+      {showOverview && (
         <section className="section-frame px-4 py-6 sm:px-8 sm:py-8 space-y-8">
           <div className="space-y-2">
-            <p className="eyebrow">Full Roster Summary</p>
+            <p className="eyebrow">Completed Rosters</p>
             <h2 className="font-serif-display text-4xl tracking-tight text-ink">Overview</h2>
-            <p className="text-sm text-ink/60">{rosters.length} clan{rosters.length > 1 ? "s" : ""} · {rosters.reduce((sum, r) => sum + r.assignedPlayers.length, 0)} players drafted total</p>
+            <p className="text-sm text-ink/60">{savedRosters.length} saved roster{savedRosters.length !== 1 ? "s" : ""}</p>
           </div>
-          <div className="grid gap-8 md:grid-cols-2">
-            {rosters.map((roster) => (
-              <div key={`ov-${roster.id}`} className="space-y-3">
-                <div className="flex items-center gap-3 border-b border-black/8 pb-3">
-                  {roster.badgeUrl && (
-                    <Image src={roster.badgeUrl} alt={roster.clanName} width={32} height={32} className="h-8 w-8 rounded-full border border-black/10" />
-                  )}
-                  <div>
-                    <p className="font-serif-display text-2xl text-ink">{roster.clanName}</p>
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-ink/50">{roster.clanTag} · {roster.assignedPlayers.length}/{roster.capacity} Players</p>
-                  </div>
-                </div>
-                <div className="divide-y divide-black/5">
-                  {roster.assignedPlayers.map((p, idx) => {
-                    const ovKey = `ov-${roster.id}-${p.player_tag}`;
-                    const isOpen = Boolean(expandedOverviewHistoryByTag[ovKey]);
-                    return (
-                      <div key={p.player_tag} className="py-2 space-y-2">
-                        <div className="flex items-center gap-3">
-                          <span className="text-[11px] text-ink/40 w-5 text-right shrink-0">{idx + 1}</span>
-                          <button
-                            type="button"
-                            onClick={() => setExpandedOverviewHistoryByTag((curr) => ({ ...curr, [ovKey]: !curr[ovKey] }))}
-                            className="min-w-0 text-left"
-                          >
-                            <p className="text-sm text-ink underline-offset-2 hover:underline truncate">{p.player_name}</p>
-                            <p className="text-[10px] uppercase tracking-wider text-ink/45">TH{p.latest_th_level || "?"} · {p.latest_league_label}</p>
-                          </button>
-                        </div>
-                        <AnimatePresence initial={false}>
-                          {isOpen && p.recent_cwl_history.length > 0 && (
-                            <motion.div
-                              key={ovKey}
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: "auto" }}
-                              exit={{ opacity: 0, height: 0 }}
-                              className="overflow-hidden ml-8 space-y-1"
-                            >
-                              {p.recent_cwl_history.map((entry, ei) => (
-                                <div key={ei} className="rounded-lg border border-black/10 bg-paper px-3 py-2">
-                                  <p className="text-xs uppercase tracking-[0.14em] text-ink/60">{entry.month_label} | {entry.roster_th} | {entry.clan_name}</p>
-                                  <p className="text-[11px] uppercase tracking-[0.12em] text-ink/45">{entry.league_label} · {entry.totals}</p>
-                                </div>
-                              ))}
-                            </motion.div>
-                          )}
-                          {isOpen && p.recent_cwl_history.length === 0 && (
-                            <motion.p key={`${ovKey}-empty`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                              className="ml-8 text-xs text-ink/40 italic"
-                            >No CWL history.</motion.p>
-                          )}
-                        </AnimatePresence>
+          {savedRosters.length === 0 ? (
+            <p className="text-sm text-ink/50 italic">No saved rosters yet. Build a roster and click "Save Draft" to archive it here.</p>
+          ) : (
+            <div className="grid gap-8 md:grid-cols-2">
+              {savedRosters.map((draft) => {
+                const players = draft.player_tags
+                  .map((tag) => initialPlayers.find((p) => p.player_tag === tag))
+                  .filter((p): p is PlayerBankEntry => p !== undefined);
+                return (
+                  <div key={`ov-${draft.id}`} className="space-y-3">
+                    <div className="flex items-center gap-3 border-b border-black/8 pb-3">
+                      {draft.badge_url && (
+                        <Image src={draft.badge_url} alt={draft.title} width={32} height={32} className="h-8 w-8 rounded-full border border-black/10" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-serif-display text-2xl text-ink truncate">{draft.title}</p>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-ink/50">
+                          {draft.clan_tag ?? "—"} · {draft.player_tags.length} players · {new Date(draft.updated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </p>
                       </div>
-                    );
-                  })}
-                  {roster.assignedPlayers.length === 0 && (
-                    <p className="text-xs text-ink/40 italic py-2">No players drafted yet.</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteDraft(draft.id, draft.title)}
+                        className="ml-auto shrink-0 text-[10px] uppercase tracking-[0.16em] text-brick/60 hover:text-brick transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                    <div className="divide-y divide-black/5">
+                      {players.map((p, idx) => {
+                        const ovKey = `ov-${draft.id}-${p.player_tag}`;
+                        const isOpen = Boolean(expandedOverviewHistoryByTag[ovKey]);
+                        return (
+                          <div key={p.player_tag} className="py-2 space-y-2">
+                            <div className="flex items-center gap-3">
+                              <span className="text-[11px] text-ink/40 w-5 text-right shrink-0">{idx + 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => setExpandedOverviewHistoryByTag((curr) => ({ ...curr, [ovKey]: !curr[ovKey] }))}
+                                className="min-w-0 text-left"
+                              >
+                                <p className="text-sm text-ink underline-offset-2 hover:underline truncate">{p.player_name}</p>
+                                <p className="text-[10px] uppercase tracking-wider text-ink/45">TH{p.latest_th_level || "?"} · {p.latest_league_label}</p>
+                              </button>
+                            </div>
+                            <AnimatePresence initial={false}>
+                              {isOpen && p.recent_cwl_history.length > 0 && (
+                                <motion.div
+                                  key={ovKey}
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: "auto" }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                  className="overflow-hidden ml-8 space-y-1"
+                                >
+                                  {p.recent_cwl_history.map((entry, ei) => (
+                                    <div key={ei} className="rounded-lg border border-black/10 bg-paper px-3 py-2">
+                                      <p className="text-xs uppercase tracking-[0.14em] text-ink/60">{entry.month_label} | {entry.roster_th} | {entry.clan_name}</p>
+                                      <p className="text-[11px] uppercase tracking-[0.12em] text-ink/45">{entry.league_label} · {entry.totals}</p>
+                                    </div>
+                                  ))}
+                                </motion.div>
+                              )}
+                              {isOpen && p.recent_cwl_history.length === 0 && (
+                                <motion.p key={`${ovKey}-empty`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                                  className="ml-8 text-xs text-ink/40 italic"
+                                >No CWL history.</motion.p>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        );
+                      })}
+                      {players.length === 0 && (
+                        <p className="text-xs text-ink/40 italic py-2">No matching players found in bank.</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
       )}
 
@@ -676,7 +659,11 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
                   return (
                     <div
                       key={player.player_tag}
-                      className="rounded-2xl border border-black/10 bg-paper px-3 py-3"
+                      className={`rounded-2xl border px-3 py-3 transition-opacity ${
+                        draftedIn
+                          ? "border-sage/20 bg-sage/5 opacity-60"
+                          : "border-black/10 bg-paper"
+                      }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -701,8 +688,8 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
                         </div>
 
                         {draftedIn ? (
-                          <span className="rounded-full border border-sage/30 bg-sage/10 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-sage">
-                            {draftedIn.clanName}
+                          <span className="shrink-0 rounded-full border border-sage/30 bg-sage/15 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-sage">
+                            ✓ {draftedIn.clanName}
                           </span>
                         ) : null}
                       </div>
@@ -745,35 +732,43 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
                       </AnimatePresence>
 
                       <div className="mt-3 flex gap-2">
-                        <select
-                          value={selectedTarget}
-                          onChange={(event) =>
-                            setDraftTargetByPlayer((current) => ({
-                              ...current,
-                              [player.player_tag]: event.target.value
-                            }))
-                          }
-                          disabled={rosters.length === 0}
-                          className="min-w-0 flex-1 rounded-xl border border-black/10 bg-paper px-2 py-2 text-xs text-ink outline-none disabled:opacity-50"
-                        >
-                          {rosters.length === 0 ? (
-                            <option value="">No rosters</option>
-                          ) : (
-                            rosters.map((roster) => (
-                              <option key={roster.id} value={roster.id}>
-                                {roster.clanName}
-                              </option>
-                            ))
-                          )}
-                        </select>
-                        <button
-                          type="button"
-                          onClick={() => handleAddPlayer(player)}
-                          className="rounded-xl border border-black/10 bg-parchment px-3 py-2 text-xs uppercase tracking-[0.16em] text-ink/70 transition-colors hover:bg-paper disabled:opacity-50"
-                          disabled={rosters.length === 0}
-                        >
-                          Add
-                        </button>
+                        {draftedIn ? (
+                          <p className="flex-1 rounded-xl border border-sage/20 bg-sage/10 px-3 py-2 text-xs uppercase tracking-[0.16em] text-sage/80 text-center">
+                            ✓ Drafted — {draftedIn.clanName}
+                          </p>
+                        ) : (
+                          <>
+                            <select
+                              value={selectedTarget}
+                              onChange={(event) =>
+                                setDraftTargetByPlayer((current) => ({
+                                  ...current,
+                                  [player.player_tag]: event.target.value
+                                }))
+                              }
+                              disabled={rosters.length === 0}
+                              className="min-w-0 flex-1 rounded-xl border border-black/10 bg-paper px-2 py-2 text-xs text-ink outline-none disabled:opacity-50"
+                            >
+                              {rosters.length === 0 ? (
+                                <option value="">No rosters</option>
+                              ) : (
+                                rosters.map((roster) => (
+                                  <option key={roster.id} value={roster.id}>
+                                    {roster.clanName}
+                                  </option>
+                                ))
+                              )}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => handleAddPlayer(player)}
+                              className="rounded-xl border border-black/10 bg-parchment px-3 py-2 text-xs uppercase tracking-[0.16em] text-ink/70 transition-colors hover:bg-paper disabled:opacity-50"
+                              disabled={rosters.length === 0}
+                            >
+                              Add
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   );
