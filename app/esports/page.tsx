@@ -89,6 +89,37 @@ function parseEsportsCSV(text: string): WarRecord[] {
   return wars.reverse();
 }
 
+function getGoogleSheetCsvUrl(rawUrl: string): string {
+  if (!rawUrl) return "";
+  try {
+    const url = new URL(rawUrl);
+    
+    // If it's a published html link, convert to csv output
+    if (url.pathname.endsWith('/pubhtml')) {
+      url.pathname = url.pathname.replace('/pubhtml', '/pub');
+      url.searchParams.set('output', 'csv');
+      return url.toString();
+    }
+    
+    // If it's an edit link, convert to direct export
+    const match = url.pathname.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    if (match && !url.pathname.endsWith('/export') && !url.pathname.endsWith('/pub')) {
+      const docId = match[1];
+      let gid = "0";
+      if (url.hash.includes('gid=')) {
+        const hashParams = new URLSearchParams(url.hash.replace('#', '?'));
+        gid = hashParams.get('gid') || "0";
+      } else if (url.searchParams.has('gid')) {
+        gid = url.searchParams.get('gid') || "0";
+      }
+      return `https://docs.google.com/spreadsheets/d/${docId}/export?format=csv&gid=${gid}`;
+    }
+  } catch (e) {
+    // Ignore invalid URLs, return raw
+  }
+  return rawUrl;
+}
+
 export default async function EsportsPage() {
   let wars: WarRecord[] = [];
   let error = null;
@@ -97,9 +128,16 @@ export default async function EsportsPage() {
     if (!CSV_URL) {
       error = "Missing CSV_URL. Please provide the Google Sheet CSV URL via ESPORTS_CSV_URL environment variable or update the constant directly.";
     } else {
-      const res = await fetch(CSV_URL);
+      const finalUrl = getGoogleSheetCsvUrl(CSV_URL);
+      const res = await fetch(finalUrl);
       if (!res.ok) throw new Error("Failed to fetch CSV data. Status: " + res.status);
+      
       const text = await res.text();
+      // Prevent parsing an HTML page if Google returns the viewer instead of CSV
+      if (text.trim().startsWith('<')) {
+        throw new Error("The URL provided returned an HTML webpage instead of a raw CSV file. Please ensure it is a direct CSV export link.");
+      }
+      
       wars = parseEsportsCSV(text);
     }
   } catch (err: any) {
