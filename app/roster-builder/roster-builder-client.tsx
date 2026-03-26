@@ -202,6 +202,12 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
   }
 
   async function handleDeleteDraft(id: string, title: string) {
+    const pwd = window.prompt(`Enter password to delete "${title}":`);
+    if (pwd === null) return; // cancelled
+    if (pwd.trim().toLowerCase() !== "bax") {
+      pushToast("Error: Incorrect password.");
+      return;
+    }
     try {
       await fetch(`/api/rosters?id=${id}`, { method: "DELETE" });
       setSavedRosters((curr) => curr.filter((r) => r.id !== id));
