@@ -44,7 +44,7 @@ type Roster = {
   clanTag: string;
   clanLeague: string;
   badgeUrl: string | null;
-  capacity: 15 | 30;
+  capacity: number;
   sortMode: SortMode;
   assignedPlayers: PlayerBankEntry[];
 };
@@ -131,7 +131,7 @@ async function parseJsonFromResponse(response: Response) {
 
 export function RosterBuilderClient({ initialPlayers }: { initialPlayers: PlayerBankEntry[] }) {
   const [clanTagInput, setClanTagInput] = useState("");
-  const [capacityInput, setCapacityInput] = useState<15 | 30>(15);
+  const [capacityInput, setCapacityInput] = useState<number | "">(15);
   const [sortModeInput, setSortModeInput] = useState<SortMode>("th");
   const [rosters, setRosters] = useState<Roster[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -196,7 +196,7 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
         clanTag: rosterTag,
         clanLeague: leagueName,
         badgeUrl,
-        capacity: capacityInput,
+        capacity: typeof capacityInput === "number" && capacityInput > 0 ? capacityInput : 15,
         sortMode: sortModeInput,
         assignedPlayers: []
       };
@@ -333,14 +333,18 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
             className="rounded-2xl border border-black/10 bg-paper px-4 py-3 text-sm uppercase tracking-[0.14em] text-ink outline-none transition-colors placeholder:text-ink/35 focus:border-black/20"
           />
 
-          <select
+          <input
+            type="number"
+            min={1}
+            max={100}
             value={capacityInput}
-            onChange={(event) => setCapacityInput(Number(event.target.value) === 30 ? 30 : 15)}
+            onChange={(event) => {
+              const val = event.target.value;
+              setCapacityInput(val === "" ? "" : Number(val));
+            }}
             className="rounded-2xl border border-black/10 bg-paper px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-black/20"
-          >
-            <option value={15}>15 Players</option>
-            <option value={30}>30 Players</option>
-          </select>
+            placeholder="Capacity"
+          />
 
           <select
             value={sortModeInput}
