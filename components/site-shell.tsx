@@ -11,7 +11,8 @@ import {
   Table2,
   Users,
   Layers3,
-  Shield
+  Shield,
+  Trophy
 } from "lucide-react";
 
 const navigation = [
@@ -44,6 +45,11 @@ const navigation = [
     href: "/wars",
     label: "Wars",
     icon: Shield
+  },
+  {
+    href: "/esports",
+    label: "Esports",
+    icon: Trophy
   }
 ];
 
