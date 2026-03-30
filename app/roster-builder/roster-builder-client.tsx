@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import * as XLSX from "xlsx";
 
 export type PlayerBankHistoryEntry = {
   month_label: string;
@@ -153,6 +154,7 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
   const [draftTargetByPlayer, setDraftTargetByPlayer] = useState<Record<string, string>>({});
   const [savedRosters, setSavedRosters] = useState<SavedRoster[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [showOverview, setShowOverview] = useState(false);
   const [expandedRosterHistoryByTag, setExpandedRosterHistoryByTag] = useState<Record<string, boolean>>({});
   const [expandedOverviewHistoryByTag, setExpandedOverviewHistoryByTag] = useState<Record<string, boolean>>({});
@@ -232,6 +234,69 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
     setRosters([newRoster]);
     setShowOverview(false);
     pushToast(`Loaded "${draft.title}" for editing — ${playersToLoad.length} players. Save Draft when done.`);
+  }
+
+  function handleExportToExcel() {
+    if (savedRosters.length === 0) {
+      pushToast("No saved rosters to export.");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      // Resolve players for each roster
+      const resolvedRosters = savedRosters.map((draft) => {
+        const players = draft.player_tags
+          .map((tag) => initialPlayers.find((p) => p.player_tag === tag))
+          .filter((p): p is PlayerBankEntry => p !== undefined);
+        return { draft, players };
+      });
+
+      // Find the max player count across all rosters for row sizing
+      const maxPlayers = Math.max(...resolvedRosters.map((r) => r.players.length), 0);
+
+      // Build the data array row by row
+      // Row 0: League tier labels (C1, C2, C3, etc.)
+      // Row 1: Clan names
+      // Row 2: Clan tags
+      // Row 3+: Player names
+      const totalRows = 3 + maxPlayers;
+      const data: (string | undefined)[][] = [];
+
+      for (let row = 0; row < totalRows; row++) {
+        const rowData: (string | undefined)[] = [];
+        for (const { draft, players } of resolvedRosters) {
+          if (row === 0) {
+            // League tier label — derive from title or leave as roster index
+            rowData.push(draft.title);
+          } else if (row === 1) {
+            rowData.push(draft.clan_tag ?? "—");
+          } else if (row === 2) {
+            rowData.push(`${players.length} players`);
+          } else {
+            const playerIndex = row - 3;
+            rowData.push(playerIndex < players.length ? players[playerIndex].player_name : undefined);
+          }
+        }
+        data.push(rowData);
+      }
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(data);
+
+      // Set column widths to comfortably fit player names
+      ws["!cols"] = resolvedRosters.map(() => ({ wch: 24 }));
+
+      XLSX.utils.book_append_sheet(wb, ws, "CWL Rosters");
+
+      const dateStr = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `CWL_Rosters_${dateStr}.xlsx`);
+      pushToast(`Exported ${savedRosters.length} roster(s) to Excel.`);
+    } catch (err) {
+      pushToast(err instanceof Error ? `Export error: ${err.message}` : "Failed to export.");
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   async function handleDeleteDraft(id: string, title: string) {
@@ -533,9 +598,23 @@ export function RosterBuilderClient({ initialPlayers }: { initialPlayers: Player
       {showOverview && (
         <section className="section-frame px-4 py-6 sm:px-8 sm:py-8 space-y-8">
           <div className="space-y-2">
-            <p className="eyebrow">Completed Rosters</p>
-            <h2 className="font-serif-display text-4xl tracking-tight text-ink">Overview</h2>
-            <p className="text-sm text-ink/60">{savedRosters.length} saved roster{savedRosters.length !== 1 ? "s" : ""}</p>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="eyebrow">Completed Rosters</p>
+                <h2 className="font-serif-display text-4xl tracking-tight text-ink">Overview</h2>
+                <p className="text-sm text-ink/60">{savedRosters.length} saved roster{savedRosters.length !== 1 ? "s" : ""}</p>
+              </div>
+              {savedRosters.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleExportToExcel}
+                  disabled={isExporting}
+                  className="shrink-0 rounded-full border border-black/15 bg-ink px-5 py-2 text-xs uppercase tracking-[0.22em] text-paper transition-colors hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isExporting ? "Exporting…" : "Export Excel"}
+                </button>
+              )}
+            </div>
           </div>
           {savedRosters.length === 0 ? (
             <p className="text-sm text-ink/50 italic">No saved rosters yet. Build a roster and click "Save Draft" to archive it here.</p>
